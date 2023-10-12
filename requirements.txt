@@ -1,0 +1,9 @@
+numpy
+pandas
+plotly.express
+streamlit
+json
+re
+functools
+datetime
+unicodedata
