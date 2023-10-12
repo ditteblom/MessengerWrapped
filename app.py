@@ -18,6 +18,12 @@ st.set_page_config(
     page_icon="✅",
 )
 
+if 'clicked' not in st.session_state:
+    st.session_state.clicked = False
+
+def click_button():
+    st.session_state.clicked = True
+
 #######################################
 # get data from uploaded files
 
@@ -63,9 +69,9 @@ with placeholder.container():
 
     time.sleep(1.5)
 
-    clicked = st.button('Click me')
+    st.button('Click me', on_click=click_button)
 
-if clicked:
+if st.session_state.clicked:
     # clear whole page
     placeholder.empty()
 
@@ -93,19 +99,23 @@ if clicked:
 
         time.sleep(1.5)
 
-# clear whole page
-placeholder.empty()
+        st.button('Click me', on_click=click_button)
 
-st.session_state.clicked = False
-# create new placeholder
-placeholder = st.empty()
-with placeholder.container():
-    st.header('The most activate person was...')
-    time.sleep(1.5)
-    st.title(most_active)
-    st.balloons()
-    time.sleep(0.8)
-    st.header(f'making contact a total of {most_active_no_messages} times')
+if st.session_state.clicked:
+    # clear whole page
+    placeholder.empty()
+
+    st.session_state.clicked = False
+
+    # create new placeholder
+    placeholder = st.empty()
+    with placeholder.container():
+        st.header('The most activate person was...')
+        time.sleep(1.5)
+        st.title(most_active)
+        st.balloons()
+        time.sleep(0.8)
+        st.header(f'making contact a total of {most_active_no_messages} times')
 
 
 # show dataframe
