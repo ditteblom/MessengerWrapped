@@ -5,9 +5,11 @@ import pandas as pd  # read csv, df manipulation
 import plotly.express as px  # interactive charts
 import streamlit as st  # 🎈 data web app development
 from streamlit_lottie import st_lottie
+from PIL import Image
 import os
 
 import pandas as pd
+import openai
 import json
 import glob
 import matplotlib.pyplot as plt
@@ -50,6 +52,10 @@ time.sleep(2)
 path = "animation_lnmxxffi.json"
 with open(path,"r") as file: 
     animation_messages = json.load(file)
+
+path = "sad_animation.json"
+with open(path,"r") as file: 
+    sad_animation = json.load(file)
 
 
 ####################################
@@ -125,25 +131,53 @@ with placeholder.container():
 placeholder.empty()
 
 # create new placeholder
-placeholder = st.empty()
+placeholder1 = st.empty()
+placeholder2 = st.empty()
 
 # show sad messages
-sad_df = df[df['type_reactions'].str.contains('crying')] 
-idx_sad = sad_df[sad_df.no_reactions == 5].index.to_list()
-if len(idx_sad) > 3:
-    no_sad = 3
+df_sad = df[(df['type_reactions'].str.contains('crying', regex=True)) & (df['no_reactions'] > 3)]
+idx_sad = df_sad[df_sad.no_reactions > 3].index.to_list()
+if len(idx_sad) > 5:
+    no_sad = 5
 else:
     no_sad = len(idx_sad)
 idx_sad_disp = np.random.choice(idx_sad, size = no_sad)
 
-with placeholder.container():
+with placeholder1.container():
+    st_lottie(sad_animation, 
+        reverse=True, 
+        height=250, 
+        width=250, 
+        speed=1, 
+        loop=True, 
+        quality='high', 
+        key='sad'
+    )
     st.title(f'You have been sad together...')
     time.sleep(2.1)
-    for val in idx_sad_disp:
-        st.header(df.iloc[val-1].content)
-        st.header(df.iloc[val].content)
-        st.header(df.iloc[val+1].content)
-        time.sleep(2.1)
+
+
+for val in idx_sad_disp:
+    placeholder2.empty()
+    placeholder2 = st.empty()
+    with placeholder2.container():
+        # calculate timestamp 10 min before and 10 min after
+        low_ts = df.iloc[val].timestamp - pd.Timedelta(minutes=7)
+        high_ts = df.iloc[val].timestamp + pd.Timedelta(minutes=7)
+        df_sad_tmp = df[(df.timestamp > low_ts) & (df.timestamp < high_ts)]
+        for index, row in df_sad_tmp.iterrows():
+            if pd.isna(row.content):
+                path = path_from_user + '/photos/' + row.photos[0]['uri'].split('/')[-1]
+                string = row.sender_name +' at ' + str(row.timestamp) + ': '
+                st.write(string)
+                im = Image.open(path)
+                st.image(im)
+            else:
+                string = row.sender_name +' at ' + str(row.timestamp) + ': ' + row.content
+                st.write(string)
+    time.sleep(10.1)
+
+    
 
 #st.markdown("### Dataframe")
 #st.dataframe(df)
