@@ -4,6 +4,7 @@ import re
 from functools import partial
 import datetime
 import unicodedata
+import glob
 
 # functions for dataframe
 def no_reactions(string):
@@ -26,20 +27,22 @@ def type_reactions(string):
         out = float('nan')
     return out
 
-def create_df(files):
+def create_df(path_from_user):
     '''
     Input: path(s) for files containing facebook messages.
     Output: dataframe with content and list with participants.
     '''
+    paths = glob.glob(path_from_user + '/message*.json')
     df = pd.DataFrame()
 
-    for file in files:
+    for path in paths:
         fix_mojibake_escapes = partial(
             re.compile(rb'\\u00([\da-f]{2})').sub,
             lambda m: bytes.fromhex(m[1].decode()),
         )
 
-        repaired = fix_mojibake_escapes(file.read())
+        with open(path, 'rb') as binary_data:
+            repaired = fix_mojibake_escapes(binary_data.read())
         data = json.loads(repaired)
 
         tmp = pd.DataFrame(data['messages'])
@@ -47,18 +50,20 @@ def create_df(files):
 
     df.reset_index(inplace = True, drop=True)
     df['timestamp_ms'] = df['timestamp_ms'].apply(lambda x : datetime.datetime.fromtimestamp(x/1000.0))
-    #df.rename(columns={"timestamp_ms": "timestamp"}, inplace = True)
-    df['date'] = pd.to_datetime(df['timestamp_ms']).dt.date
-    df['time'] = pd.to_datetime(df['timestamp_ms']).dt.time
-    df['year'] = pd.to_datetime(df['timestamp_ms']).dt.year
-    df['month'] = pd.to_datetime(df['timestamp_ms']).dt.month
+    df.rename(columns={"timestamp_ms": "timestamp"}, inplace = True)
+    df['date'] = pd.to_datetime(df['timestamp']).dt.date
+    df['time'] = pd.to_datetime(df['timestamp']).dt.time
+    df['year'] = pd.to_datetime(df['timestamp']).dt.year
+    df['month'] = pd.to_datetime(df['timestamp']).dt.month
     df['weekday'] = pd.to_datetime(df['date']).dt.day_name()
-    df.drop('timestamp_ms', axis = 1, inplace = True)
     df['no_reactions'] = df.reactions.apply(lambda x: no_reactions(x))
     df['type_reactions'] = df.reactions.apply(lambda x: type_reactions(x))
 
     participants = []
     for item in data['participants']:
         participants.append(item['name'])
+
+    df.sort_values(by='timestamp', inplace=True)
+    df.reset_index(inplace = True, drop=True)
 
     return df, participants
