@@ -1,8 +1,16 @@
+time 
 numpy
 pandas
-plotly.express
+plotly
 streamlit
+streamlit_lottie
+PIL
+os
+openai
 json
+glob
+matplotlib
+langchain
 re
 functools
 datetime

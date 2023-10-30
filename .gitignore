@@ -161,3 +161,7 @@ cython_debug/
 
 # openai key
 openai_key.txt
+notebook.ipynb
+*.csv
+conv_list
+q_list
